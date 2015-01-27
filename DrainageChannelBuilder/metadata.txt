@@ -1,0 +1,36 @@
+# This file contains metadata for your plugin. Since 
+# version 2.0 of QGIS this is the proper way to supply 
+# information about a plugin. The old method of 
+# embedding metadata in __init__.py will 
+# is no longer supported since version 2.0.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=Drainage Channel Builder
+qgisMinimumVersion=2.0
+description=This plugin will cut a simple, trapezoidal drainage channel in a DEM and calculate the cut volume.
+version=0.2
+author=Mitchell Weier - North Dakota State Water Commission
+email=mweier@nd.gov
+
+# End of mandatory metadata
+
+# Optional items:
+
+# Uncomment the following line and add your changelog:
+ changelog=0.2 added 1D calc
+
+# Tags are comma separated with spaces allowed
+tags=
+
+homepage=https://github.com/msweier/QGIS-Drainage-Channel-Builder
+tracker=https://github.com/msweier/QGIS-Drainage-Channel-Builder/issues
+repository=https://github.com/msweier/QGIS-Drainage-Channel-Builder
+icon=icon.png
+# experimental flag
+experimental=True
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+

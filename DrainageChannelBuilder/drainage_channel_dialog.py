@@ -53,24 +53,23 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         # #widgets-and-dialogs-with-auto-connect
         self.iface = iface
         self.setupUi(self)
-
-
+        
+        self.resWarning = False        
 
         
+
         self.btnOk = self.buttonBox.button(QtGui.QDialogButtonBox.Ok)
         self.btnOk.setText(self.tr("Run 2D"))
-        self.btnClose = self.buttonBox.button(QtGui.QDialogButtonBox.Cancel)  
+        self.btnClose = self.buttonBox.button(QtGui.QDialogButtonBox.Close)  
 
         
         self.cbDEM.currentIndexChanged.connect(self.updateRasterRes)
-
         self.cbDEM.currentIndexChanged.connect(self.checkLayerExtents)
         self.cbCL.currentIndexChanged.connect(self.checkLayerExtents)      
         self.spinElevStart.valueChanged.connect(self.calcDepth)
         self.spinElevEnd.valueChanged.connect(self.calcDepth)
         self.spinRightSideSlope.valueChanged.connect(self.updateMaxBankWidth)
-        self.spinLeftSideSlope.valueChanged.connect(self.updateMaxBankWidth)
-        
+        self.spinLeftSideSlope.valueChanged.connect(self.updateMaxBankWidth)   
         self.spinWidth.valueChanged.connect(self.checkRes)
         self.spinRes.valueChanged.connect(self.checkRes)
         self.browseBtn.clicked.connect(self.writeDirName)
@@ -80,15 +79,15 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         # add matplotlib figure to dialog
         self.figure = Figure()
         self.axes = self.figure.add_subplot(111)
-        self.figure.subplots_adjust(left=.1, bottom=0.1, right=.95, top=.95, wspace=None, hspace=.2)
+        self.figure.subplots_adjust(left=.1, bottom=0.1, right=.95, top=.9, wspace=None, hspace=.2)
         self.canvas = FigureCanvas(self.figure)
         
         
         self.widgetPlotToolbar = NavigationToolbar(self.canvas, self.widgetPlot)
-#        lstActions = self.widgetPlotToolbar.actions()
-#        self.widgetPlotToolbar.removeAction(lstActions[7])
-        self.gLayoutPlot.addWidget(self.canvas)
-        self.gLayoutPlot.addWidget(self.widgetPlotToolbar)
+        lstActions = self.widgetPlotToolbar.actions()
+        self.widgetPlotToolbar.removeAction(lstActions[7])
+        self.gPlot.addWidget(self.canvas)
+        self.gPlot.addWidget(self.widgetPlotToolbar)
         self.figure.patch.set_visible(False)
         
         # and configure matplotlib params
@@ -98,10 +97,6 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         rcParams["font.fantasy"] = "Comic Sans MS, Arial, Liberation Sans"
         rcParams["font.monospace"] = "Courier New, Liberation Mono"
 
-
-
-
-        
         self.manageGui() 
     
     def manageGui(self):
@@ -110,9 +105,8 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         self.cbCL.addItems(utils.getLineLayerNames())
         self.cbDEM.clear()
         self.cbDEM.addItems(utils.getRasterLayerNames())
-        
+  
     def refreshPlot(self):
-        print 'refreshPlot'
         self.axes.clear()
         
         results1D = utils.getPlotArray(self.vLayer,self.rLayer,self.spinElevStart.value(),self.spinElevEnd.value(),self.xRes)
@@ -140,18 +134,15 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
         
         self.axes.add_artist(at)
-
-        
         self.canvas.draw()
         
     def refreshPlotText(self):
-        print 'refreshPlotText'
+
         at = AnchoredText(self.outText, prop=dict(size=12), frameon=True,loc=1,)
         at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
         self.axes.add_artist(at)
         self.canvas.draw()
-    
-        
+          
     def calcCutAvgAreaEndMeth(self):
         self.depth1D = self.zExistA - self.zPropA
         
@@ -186,7 +177,7 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         outPath = self.outputDir.text()
         home = os.path.expanduser("~")
         if outPath == '':
-            outPath = os.path.join(home,'Desktop','QGIS2DrainageChannelWorkerFiles')
+            outPath = os.path.join(home,'Desktop','QGIS2DrainageChannelBuilderFiles')
             self.outputDir.setText(outPath)
             if not os.path.exists(outPath):
                 os.makedirs(outPath)
@@ -216,26 +207,29 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
 
         
     def updateRasterRes(self):
-        print 'updateRasterRes'
+
         layer = utils.getRasterLayerByName(self.cbDEM.currentText().split(' EPSG')[0])
         if layer.isValid():
             self.xRes = layer.rasterUnitsPerPixelX()
             self.yRes = layer.rasterUnitsPerPixelY()
             self.labelDEMres.setText('DEM Layer Resolution = {:.2f} X {:.2f} Y'.format(self.xRes,self.yRes))
-            
+           
     def checkRes(self):
-        print 'checkRes'
-        if self.spinWidth.value()<self.spinRes.value()*10:
-            self.labelResWarning.setText('Warning: For best 2D results calculation resolution should be at most one tenth of bottom width')
+
+        if self.spinWidth.value()<=self.spinRes.value()*10:
+            
+            self.resWarning = True
+            self.errOutput()
         else:
-            self.labelResWarning.setText('')
+            self.resWarning = False
+            self.errOutput()
         self.calcCutAvgAreaEndMeth()
         self.refreshPlotText()
 
 
 
     def checkLayerExtents(self):
-        print 'checkLayerExtents'
+
         self.rLayer = utils.getRasterLayerByName(self.cbDEM.currentText().split(' EPSG')[0])
         self.vLayer = utils.getVectorLayerByName(self.cbCL.currentText().split(' EPSG')[0])
         try:
@@ -245,32 +239,32 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
                     self.calcElev()
                     self.btn1Dsave.setEnabled(True)
                     self.btnOk.setEnabled(True)
+                    self.errOutput()
 
                 else:
                    self.btnOk.setEnabled(False)
                    self.spinElevStart.setEnabled(False)
                    self.spinElevEnd.setEnabled(False)
-                   self.labelStartDepth.setText('Centerline outside of raster extent')
-                   self.labelEndDepth.setText('Centerline outside of raster extent')
-                   self.btn1Dsave.setEnabled(False)
                    self.layersOverlap = False
+                   self.errOutput()
         except:
             self.btnOk.setEnabled(False)
             self.spinElevStart.setEnabled(False)
             self.spinElevEnd.setEnabled(False)
             self.btn1Dsave.setEnabled(False)
-            self.labelStartDepth.setText('Centerline outside of raster extent')
-            self.labelEndDepth.setText('Centerline outside of raster extent')
+            self.overlayError = True
             self.layersOverlap = False
+            self.errOutput()
             pass
+        
     def calcDepth(self):
         if self.layersOverlap:
-            print self.layersOverlap
+
             self.layersOverlap = utils.calcDepth(self)
         if self.layersOverlap:
             self.refreshPlot()
+            
     def calcElev(self):
-        print 'calcElev'
         if self.layersOverlap:
             self.spinElevStart.setEnabled(True)
             self.spinElevEnd.setEnabled(True)
@@ -295,22 +289,29 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         
         
     def stopWorker(self):
+        self.worker.kill()
         if self.worker is not None:
-            #self.worker.stop()
+
             self.worker.deleteLater()
             self.thread.quit()
             self.thread.wait()
             self.thread.deleteLater()
             
-    def workerInterrupted(self):
-        self.restoreGui()
-               
+    def errOutput(self):
+        if self.resWarning and not self.layersOverlap:
+            self.labelErrMessage.setText('Error: Vector is not completely within raster domain\nWarning: For best 2D results, channel bottom width should be at least ten times greater than 2D grid calculation resolution')
+        elif self.resWarning:
+            self.labelErrMessage.setText('Warning: For best 2D results, channel bottom width should be at least ten times greater than 2D grid calculation resolution')
+        elif not self.layersOverlap:
+            self.labelErrMessage.setText('Error: Vector is not completely within raster domain')
+        else:
+            self.labelErrMessage.setText('')
+            
         
     def workerFinished(self,values):
        # print 'values = ',values
         self.stopWorker()
         self.values = values
-        print values
         maxCut = values[0][0]
         avgCut = values[0][1]
         totVol = values[0][2]
@@ -356,10 +357,11 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         self.spinLeftSideSlope.setEnabled(True)
         self.spinRightSideSlope.setEnabled(True)
         self.spinBankWidth.setEnabled(True)
-        self.btnOk.setEnabled(True)
         self.browseBtn.setEnabled(True)
         self.btn1Dsave.setEnabled(True)
-        # create plot
+        self.btnClose.setEnabled(True)
+        self.btnOk.setEnabled(True)
+
 
         self.writeOut1Dresults()
         fileName = 'Channel2DresultsSummary.txt'
@@ -368,14 +370,18 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         outFile.write(outText)  
         outFile.close()
         
+
+
+
     def accept(self):
         print 'accepted'
         
         args = [self.rLayer,self.vLayer,self.spinWidth.value(),self.spinRes.value(),self.spinElevStart.value(),self.spinElevEnd.value(),self.spinLeftSideSlope.value(),self.spinRightSideSlope.value(),self.spinBankWidth.value(),self.outputDir.text()]
+        self.thread = QThread() 
         # create a new worker instance
         self.worker = DrainageChannelThread.DrainageChannelBuilder(args)   
         
-        self.thread = QThread(self)      
+             
         
         # create a new worker instance
         self.worker.moveToThread(self.thread)
@@ -385,13 +391,10 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
 
         self.worker.workerFinished.connect(self.workerFinished)
         self.worker.error.connect(self.workerError)
-        self.worker.workerInterrupted.connect(self.workerInterrupted)
-
-        self.btnOk.setEnabled(False)
-        self.btnClose.setText(self.tr("Cancel"))
-        self.btnClose.clicked.connect(self.worker.kill)
-
         
+
+
+        self.btnClose.setEnabled(False)
         self.cbCL.setEnabled(False)
         self.cbDEM.setEnabled(False)
         self.spinRes.setEnabled(False)
@@ -403,11 +406,12 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         self.spinBankWidth.setEnabled(False)
         self.browseBtn.setEnabled(False)
         self.btn1Dsave.setEnabled(False)
+        self.btnOk.setEnabled(False)
+        self.tabWidgetOutput.setCurrentWidget(self.tabOutputSummary)
 
-        
 
         #self.buttonBox.rejected.disconnect(self.reject)
-        #self.btnClose.clicked.connect(self.stopWorker)
+        
         
         self.progressBar.setMaximum(0)
         self.thread.started.connect(self.worker.run)

@@ -100,7 +100,6 @@ def calcElev(self):
     return [startPointZdem, endPointZdem]
     
 def getPlotArray(vLayer,rLayer,zStart,zEnd,res):
-    print 'getPlotArray'
     # transform vector into in Shapely        
     features = vLayer.getFeatures()
     for f in features:
@@ -260,7 +259,6 @@ def channelPoints(vLayer,raster,startElev,endElev,width,leftSideSlope,rightSideS
 
         for i in frange(res,width/2.0 ,res):
             #print i
-            print 'in channel bottom loop'
             leftStep = clSHP.parallel_offset(i,'left')
             rightStep = clSHP.parallel_offset(i,'right')
             # right offset reverses coordinate order, reverse them back

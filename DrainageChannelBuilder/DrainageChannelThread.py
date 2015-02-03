@@ -21,14 +21,6 @@
  ***************************************************************************/
 """
 
-
-
-#from PyQt4.QtCore import *
-#from PyQt4.QtGui import *
-#
-#from qgis.core import *
-#from qgis.gui import *
-from shapely.wkb import loads
 from shapely.geometry import Polygon
 from osgeo import ogr, gdal
 import numpy as np
@@ -40,6 +32,7 @@ import GdalTools_utils as gdalUtils
 import os
 import platform
 import subprocess
+
             
 class DrainageChannelBuilder(QObject):
 
@@ -51,9 +44,7 @@ class DrainageChannelBuilder(QObject):
 
     def __init__(self,args):
         QObject.__init__(self)
-#        self.mutex = QMutex()
-#        self.stopMe = 0
-#        self.interrupted = False
+
         
         self.killed = False
         self.rLayer,self.vLayer,self.width,self.res,self.startElev,self.endElev,self.leftSideSlope,self.rightSideSlope,self.bankWidth,self.dirName = args
@@ -98,37 +89,28 @@ class DrainageChannelBuilder(QObject):
     def kill(self):
         self.killed = True
 
-#    def stop(self):
-#        self.mutex.lock()
-#        self.stopMe = 1
-#        self.mutex.unlock()
-#
-#        QThread.wait(self)
+    def stop(self):
+        self.mutex.lock()
+        self.stopMe = 1
+        self.mutex.unlock()
+
+        QThread.wait(self)
         
     def DrainageChannelWorker(self):
 
         home = os.path.expanduser("~")
         if self.dirName == '':
-            self.dirName = os.path.join(home,'Desktop','QGIS2DrainageChannelWorkerFiles')
+            self.dirName = os.path.join(home,'Desktop','QGIS2DrainageChannelBuilderFiles')
             if not os.path.exists(self.dirName):
                 os.makedirs(self.dirName)
 
 
         os.chdir(self.dirName)
-        
-#        gdalPath = gdalUtils.getGdalBinPath()
+
         epsgCode = self.vLayer.crs().authid()
-        
-        startPointZstring = str(round(self.startElev,2)).replace('.','_')
-
-            
-
         # open raster w/ gdal
         fileDEM = self.rLayer.dataProvider().dataSourceUri()
-#        gdalDEM = gdal.Open(fileDEM)
-#        gt =gdalDEM.GetGeoTransform()
-#        bands = gdalDEM.RasterCount
-        
+
         
 
         
@@ -155,7 +137,7 @@ class DrainageChannelBuilder(QObject):
         message='\nWriting out points to vrt format for gdal_grid\n'
         self.updateProgressText.emit(message)
         
-        tmpCSV = 'ChannelPoints'+str(int(round(self.res)))+'res'+startPointZstring
+        tmpCSV = 'ChannelPoints'
         try:
             os.remove(tmpCSV+'.csv')
             os.remove(tmpCSV+'.vrt')
@@ -189,7 +171,7 @@ class DrainageChannelBuilder(QObject):
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stdin=open(os.devnull),stderr=subprocess.STDOUT,universal_newlines=True)
         ff, err = proc.communicate()
         print err        
-        #print clSHP
+
         
         
         
@@ -222,8 +204,9 @@ class DrainageChannelBuilder(QObject):
         outDataSource = outLayer = feat = geom = None # destroy these  
         
         # clip channel grid to channel polygon
-            
-        print 'clip DEM to channel polygon'
+        message='\nclip DEM to channel polygon\n'
+        self.updateProgressText.emit(message)            
+
         tmpChanRastClip = os.path.join(self.dirName,self.vLayer.name().replace(' ','_')+'ChannelGridClip.tif')
         cmd = 'gdalwarp -t_srs {0} -dstnodata -99999 -q -cutline {1} -crop_to_cutline -te {2} {3} {4} {5} -tr {6} {7} -overwrite {8} {9}'.format(epsgCode,outShape,xMin,yMin,xMax,yMax,self.res,self.res,tmpChanRast,tmpChanRastClip,)
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stdin=open(os.devnull),stderr=subprocess.STDOUT,universal_newlines=True)
@@ -250,7 +233,7 @@ class DrainageChannelBuilder(QObject):
             gdal_calc = 'gdal_calc.py'
         
         
-        demChannel = os.path.join(self.dirName,'ChannelElev'+str(int(round(self.res)))+'res{}.tif'.format(startPointZstring))
+        demChannel = os.path.join(self.dirName,'ChannelElev.tif')
         cmd = gdal_calc+' -A {0} -B {1} --overwrite --outfile={2} --NoDataValue=0 --calc="B*(B<A)+A*(B>=A)"'.format(tmpDEMclip,tmpChanRastClip,demChannel)
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stdin=open(os.devnull),stderr=subprocess.STDOUT,universal_newlines=True)
         ff, err = proc.communicate() 	
@@ -258,7 +241,7 @@ class DrainageChannelBuilder(QObject):
         
         # calc cut grid
         
-        demCutDepth = os.path.join(self.dirName,'ChannelDepthCut'+str(int(round(self.res)))+'res{}.tif'.format(startPointZstring))
+        demCutDepth = os.path.join(self.dirName,'ChannelDepthCut.tif')
         cmd = gdal_calc+' -A {0} -B {1} --overwrite --outfile={2} --NoDataValue=0 --calc="A*(B<0)+(A-B)*(B>0)"'.format(tmpDEMclip,demChannel,demCutDepth)
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stdin=open(os.devnull),stderr=subprocess.STDOUT,universal_newlines=True)
         ff, err = proc.communicate() 	
@@ -279,9 +262,7 @@ class DrainageChannelBuilder(QObject):
         
         
         self.values = maxCut,avgCut,vol,self.dirName,demChannel,demCutDepth, channelLength
-        
-        
-        
+
         
         removeWorkingFiles = True
         

@@ -159,7 +159,7 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         self.maxDepth1D = np.max(self.depth1D)
         self.totLength = np.max(self.stationA)
         self.channelSlope = (self.zPropA[-1]-self.zPropA[0])/self.totLength
-        self.outText = 'Length: {2:.2f}\nChannel Slope: {3:.6f}\n1D Max. Cut Depth: {0:,.2f}\n1D Tot. Vol.: {1:,.2f}'.format(self.maxDepth1D,self.totVol1D,self.totLength,self.channelSlope) 
+        self.outText = 'Length: {2:.2f} layer units\nChannel Slope: {3:.6f}\n1D Max. Cut Depth: {0:,.2f} layer units\n1D Tot. Vol.: {1:,.2f} layer units$^3$'.format(self.maxDepth1D,self.totVol1D,self.totLength,self.channelSlope) 
 
         #self.canvas.draw() 
 
@@ -184,7 +184,7 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
                 
         os.chdir(outPath)
         fileName = 'Channel1Dresults.txt'
-        outHeader = 'DEM Layer:\t{0}\nChannel Centerline:\t{1}\nChannel Bottom Width:\t{3}\nChannel Start Elevation:\t{4}\nChannel End Elevation:\t{5}\nChannel Slope:\t{12:.06f}\nLeft Side Slope:\t{6}\nRight Side Slope:\t{7}\nLength:\t{9:,.2f}\n1D Max. Cut Depth:\t{10:,.2f}\n1D Tot. Vol:\t{11:,.2f}\n\nstation\tvol\tzExist\tzProp\tdepth\tcutArea\tx\ty\n'.format(self.cbDEM.currentText(),self.cbCL.currentText(),self.spinRes.value(),self.spinWidth.value(),self.spinElevStart.value(),self.spinElevEnd.value(),self.spinLeftSideSlope.value(),self.spinRightSideSlope.value(),self.spinBankWidth.value(),self.totLength,self.maxDepth1D,self.totVol1D,self.channelSlope)
+        outHeader = 'DEM Layer:\t{0}\nChannel Centerline:\t{1}\nProjection (Proj4 format):\t{13}\nChannel Bottom Width:\t{3}\nChannel Start Elevation:\t{4}\nChannel End Elevation:\t{5}\nChannel Slope:\t{12:.06f}\nLeft Side Slope:\t{6}\nRight Side Slope:\t{7}\nLength:\t{9:,.2f}\n1D Max. Cut Depth:\t{10:,.2f}\n1D Tot. Vol:\t{11:,.2f}\nNote:\tAll units of length correspond to layer units, all units of area and volume are a combination of layer units and raster elevation units\n\nstation\tvol\tzExist\tzProp\tdepth\tcutArea\tx\ty\n'.format(self.cbDEM.currentText(),self.cbCL.currentText(),self.spinRes.value(),self.spinWidth.value(),self.spinElevStart.value(),self.spinElevEnd.value(),self.spinLeftSideSlope.value(),self.spinRightSideSlope.value(),self.spinBankWidth.value(),self.totLength,self.maxDepth1D,self.totVol1D,self.channelSlope,self.rLayer.crs().toProj4())
         np.savetxt(fileName, self.out1Dresults, fmt = '%.3f', header = outHeader, delimiter = '\t') 
         self.canvas.print_figure('Channel1DresultsFigure')
 
@@ -203,6 +203,7 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         self.outputDir.clear()
         self.dirName = QtGui.QFileDialog.getExistingDirectory(self, 'Select Output Directory')
         self.outputDir.setText(self.dirName)
+        self.checkBoxLoadLayers.setCheckState(True)
 
 
         
@@ -320,7 +321,7 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
         demChannelPath = values[0][4]
         demCutDepth = values[0][5]
         length = values[0][6]
-        outText = 'Summary of 2D Results:\nLength\t{3:,.2f}\nMax. Cut Depth\t{0:.2f}\nAvg. Cut Depth\t{1:.2f}\nTot. Vol.\t{2:,.2f}'.format(maxCut,avgCut,totVol,length)
+        outText = 'Summary of 2D Results:\nTot. Vol.\t{2:,.2f}\nLength\t{3:,.2f}\nMax. Cut Depth\t{0:.2f}\nAvg. Cut Depth\t{1:.2f}'.format(maxCut,avgCut,totVol,length)
         self.updateOutputText(outText)
 
 #            for layer in self.layers:
@@ -365,10 +366,12 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
 
         self.writeOut1Dresults()
         fileName = 'Channel2DresultsSummary.txt'
-        outText = 'DEM Layer:\t{0}\nChannel Centerline:\t{1}\n2D Grid Calc Res.:\t{2}\nChannel Bottom Width:\t{3}\nChannel Start Elevation:\t{4}\nChannel End Elevation:\t{5}\nChannel Slope:\t{13:.06f}\nLeft Side Slope:\t{6}\nRight Side Slope:\t{7}\n2D Maximum Bank Width:\t{8}\n\nLength:\t{9:,.2f}\n2D Max. Cut Depth:\t{10:,.2f}\n2D Avg. Cut Depth:\t{11:,.2f}\n2D Tot. Vol:\t{12:,.2f}\n'.format(self.cbDEM.currentText(), self.cbCL.currentText(), self.spinRes.value(), self.spinWidth.value(), self.spinElevStart.value(), self.spinElevEnd.value(), self.spinLeftSideSlope.value(), self.spinRightSideSlope.value(), self.spinBankWidth.value(), self.totLength, maxCut, avgCut, totVol, self.channelSlope)
+        outText = 'DEM Layer:\t{0}\nChannel Centerline:\t{1}\nProjection (Proj4 format):\t{14}\n2D Grid Calc Res.:\t{2}\nChannel Bottom Width:\t{3}\nChannel Start Elevation:\t{4}\nChannel End Elevation:\t{5}\nChannel Slope:\t{13:.06f}\nLeft Side Slope:\t{6}\nRight Side Slope:\t{7}\n2D Maximum Bank Width:\t{8}\n\nLength:\t{9:,.2f}\n2D Max. Cut Depth:\t{10:,.2f}\n2D Avg. Cut Depth:\t{11:,.2f}\n2D Tot. Vol:\t{12:,.2f}\n\nNote:\tAll units of length correspond to layer units, all units of area and volume are a combination of layer units and raster elevation units\n\n'.format(self.cbDEM.currentText(), self.cbCL.currentText(), self.spinRes.value(), self.spinWidth.value(), self.spinElevStart.value(), self.spinElevEnd.value(), self.spinLeftSideSlope.value(), self.spinRightSideSlope.value(), self.spinBankWidth.value(), self.totLength, maxCut, avgCut, totVol, self.channelSlope,self.rLayer.crs().toProj4())
         outFile = open(fileName,'w') 
         outFile.write(outText)  
         outFile.close()
+        self.checkBoxLoadLayers.setCheckState(False)
+        self.iface.mapCanvas().refresh()
         
 
 

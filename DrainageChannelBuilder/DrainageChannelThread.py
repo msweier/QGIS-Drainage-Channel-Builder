@@ -137,7 +137,7 @@ class DrainageChannelBuilder(QObject):
         message='\nWriting out points to vrt format for gdal_grid\n'
         self.updateProgressText.emit(message)
         
-        tmpCSV = 'ChannelPoints'
+        tmpCSV = 'ChannelPoints_{}'.format(self.vLayer.name())
         try:
             os.remove(tmpCSV+'.csv')
             os.remove(tmpCSV+'.vrt')
@@ -233,7 +233,7 @@ class DrainageChannelBuilder(QObject):
             gdal_calc = 'gdal_calc.py'
         
         
-        demChannel = os.path.join(self.dirName,'ChannelElev.tif')
+        demChannel = os.path.join(self.dirName,'ChannelElev_{}.tif'.format(self.vLayer.name()))
         cmd = gdal_calc+' -A {0} -B {1} --overwrite --outfile={2} --NoDataValue=0 --calc="B*(B<A)+A*(B>=A)"'.format(tmpDEMclip,tmpChanRastClip,demChannel)
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stdin=open(os.devnull),stderr=subprocess.STDOUT,universal_newlines=True)
         ff, err = proc.communicate() 	
@@ -241,7 +241,7 @@ class DrainageChannelBuilder(QObject):
         
         # calc cut grid
         
-        demCutDepth = os.path.join(self.dirName,'ChannelDepthCut.tif')
+        demCutDepth = os.path.join(self.dirName,'ChannelDepthCut_{}.tif'.format(self.vLayer.name()))
         cmd = gdal_calc+' -A {0} -B {1} --overwrite --outfile={2} --NoDataValue=0 --calc="A*(B<0)+(A-B)*(B>0)"'.format(tmpDEMclip,demChannel,demCutDepth)
         proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stdin=open(os.devnull),stderr=subprocess.STDOUT,universal_newlines=True)
         ff, err = proc.communicate() 	

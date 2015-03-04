@@ -9,8 +9,9 @@
 [general]
 name=Drainage Channel Builder
 qgisMinimumVersion=2.0
-description=This plugin will cut a simple, trapezoidal drainage channel in a DEM and calculate the cut volume.  A simplified 1D volume estimate is performed on the fly which may be more accurate for narrow channels.<br><br>Dependencies:  Shapely, numpy, matplotlib
-version=0.31
+description=This plugin will cut a simple, trapezoidal drainage channel in a DEM and calculate the cut volume.  A simplified 1D volume estimate is performed on the fly which may be more accurate for narrow channels.
+about=Dependencies:  Shapely, numpy, matplotlib
+version=0.33
 author=Mitchell Weier-North Dakota State Water Commission
 email=mweier@nd.gov
 
@@ -20,6 +21,8 @@ email=mweier@nd.gov
 
 # Uncomment the following line and add your changelog:
 changelog=
+	0.33 writes vector layer name suffix to output files
+	0.32 removed html linebreaks in metadata
 	0.31 clarified output units, auto refresh map canvas, removed html links in metadata
 	0.3 added documentation, stated dependencies, removed unnecessary files, clarified UI
 	0.2 Testing release, added 1D calc

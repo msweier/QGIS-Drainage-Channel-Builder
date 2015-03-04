@@ -129,7 +129,7 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
 
         self.axes.set_ylabel(unicode(self.tr("Elevation, z field units")))
         self.axes.set_xlabel(unicode(self.tr('Station, layer units')))
-        self.axes.set_title(unicode(self.tr('Channel Profile and 1D Calculation Results')))
+        self.axes.set_title(unicode(self.tr('Channel {} Profile and 1D Calculation Results'.format(self.vLayer.name()))))
         at = AnchoredText(self.outText, prop=dict(size=12), frameon=True,loc=1,)
         at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
         
@@ -183,10 +183,10 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
                 os.makedirs(outPath)
                 
         os.chdir(outPath)
-        fileName = 'Channel1Dresults.txt'
+        fileName = 'Channel1Dresults_{}.txt'.format(self.vLayer.name())
         outHeader = 'DEM Layer:\t{0}\nChannel Centerline:\t{1}\nProjection (Proj4 format):\t{13}\nChannel Bottom Width:\t{3}\nChannel Start Elevation:\t{4}\nChannel End Elevation:\t{5}\nChannel Slope:\t{12:.06f}\nLeft Side Slope:\t{6}\nRight Side Slope:\t{7}\nLength:\t{9:,.2f}\n1D Max. Cut Depth:\t{10:,.2f}\n1D Tot. Vol:\t{11:,.2f}\nNote:\tAll units of length correspond to layer units, all units of area and volume are a combination of layer units and raster elevation units\n\nstation\tvol\tzExist\tzProp\tdepth\tcutArea\tx\ty\n'.format(self.cbDEM.currentText(),self.cbCL.currentText(),self.spinRes.value(),self.spinWidth.value(),self.spinElevStart.value(),self.spinElevEnd.value(),self.spinLeftSideSlope.value(),self.spinRightSideSlope.value(),self.spinBankWidth.value(),self.totLength,self.maxDepth1D,self.totVol1D,self.channelSlope,self.rLayer.crs().toProj4())
         np.savetxt(fileName, self.out1Dresults, fmt = '%.3f', header = outHeader, delimiter = '\t') 
-        self.canvas.print_figure('Channel1DresultsFigure')
+        self.canvas.print_figure('Channel1DresultsFigure_{}'.format(self.vLayer.name()))
 
             
     def updateMaxBankWidth(self):
@@ -365,7 +365,7 @@ class DrainageChannelBuilderDialog(QtGui.QDialog, FORM_CLASS):
 
 
         self.writeOut1Dresults()
-        fileName = 'Channel2DresultsSummary.txt'
+        fileName = 'Channel2DresultsSummary_{}.txt'.format(self.vLayer.name())
         outText = 'DEM Layer:\t{0}\nChannel Centerline:\t{1}\nProjection (Proj4 format):\t{14}\n2D Grid Calc Res.:\t{2}\nChannel Bottom Width:\t{3}\nChannel Start Elevation:\t{4}\nChannel End Elevation:\t{5}\nChannel Slope:\t{13:.06f}\nLeft Side Slope:\t{6}\nRight Side Slope:\t{7}\n2D Maximum Bank Width:\t{8}\n\nLength:\t{9:,.2f}\n2D Max. Cut Depth:\t{10:,.2f}\n2D Avg. Cut Depth:\t{11:,.2f}\n2D Tot. Vol:\t{12:,.2f}\n\nNote:\tAll units of length correspond to layer units, all units of area and volume are a combination of layer units and raster elevation units\n\n'.format(self.cbDEM.currentText(), self.cbCL.currentText(), self.spinRes.value(), self.spinWidth.value(), self.spinElevStart.value(), self.spinElevEnd.value(), self.spinLeftSideSlope.value(), self.spinRightSideSlope.value(), self.spinBankWidth.value(), self.totLength, maxCut, avgCut, totVol, self.channelSlope,self.rLayer.crs().toProj4())
         outFile = open(fileName,'w') 
         outFile.write(outText)  
